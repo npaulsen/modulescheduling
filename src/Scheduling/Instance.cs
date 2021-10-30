@@ -25,4 +25,12 @@ public record Customer(string Name, ImmutableListWithValueSemantics<Module> Modu
 
 public record Module(string Name);
 
-public record Objective(int Deadline);
+public abstract record Objective() {
+    public abstract int CalculateValue(Instance instance, ModuleSchedule schedule);
+};
+public record DeadlineObjective(int Deadline) : Objective {
+    public int CalculateValue(Instance instance, ModuleSchedule schedule) {
+
+    }
+}
+public record TimeValueObjective() : Objective;
