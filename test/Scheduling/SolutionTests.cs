@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Xunit;
 
@@ -22,11 +23,11 @@ public class SolutionTests
     [Fact]
     public void Solution_WhenTheInstanceProvidesTwoObjectives_HasTwoObjectiveValues()
     {
-        var instance = new Instance(new Module[] { }, new Customer[] { }, new Objective[] { new(0), new(0) });
+        var instance = new Instance(Array.Empty<Module>(), Array.Empty<Customer>(), new Objective[] { new(0), new(0) });
 
-        var solution = new Solution(instance, new ModuleSchedule(new Module[] { }));
+        var solution = new Solution(instance, new ModuleSchedule(Array.Empty<Module>()));
 
-        Assert.Equal(2, solution.Values.Values.Count());
+        Assert.Equal(2, solution.Values.Values.Count);
     }
 
     [Fact]

@@ -18,7 +18,10 @@ public class Instance
     }
 }
 
-public record Customer(string Name, IEnumerable<Module> Modules);
+public record Customer(string Name, ImmutableListWithValueSemantics<Module> Modules)
+{
+    public Customer(string name, IEnumerable<Module> modules) : this(name, modules.ToValueList()) { }
+};
 
 public record Module(string Name);
 
