@@ -27,11 +27,8 @@ public class Solution
         Values = CalculateValues();
     }
 
-    private ObjectiveValues CalculateValues() => new (Instance.Objectives.Select(objective =>
-    {
-        var coveredModules = new HashSet<Module>(Schedule.ScheduledModules.Take(objective.Deadline));
-        return Instance.Customers.Count(c => c.Modules.All(coveredModules.Contains));
-    }));
+    private ObjectiveValues CalculateValues()
+    => new(Instance.Objectives.Select(objective => objective.CalculateValue(Instance.Customers, Schedule)));
 
     public Report GenerateReport()
     {

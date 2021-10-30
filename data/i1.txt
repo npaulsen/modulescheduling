@@ -1,7 +1,8 @@
-3
-40
-80
-120
+4
+Deadline 40
+Deadline 80
+Deadline 120
+Timevalue
 1	1
 1	2
 1	3

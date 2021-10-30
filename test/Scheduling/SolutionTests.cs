@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
@@ -6,56 +6,23 @@ namespace Scheduling;
 
 public class SolutionTests
 {
+    private record FixedValueDummyObjective(int Value) : Objective
+    {
+        public override int CalculateValue(IEnumerable<Customer> _, ModuleSchedule __) => Value;
+    }
+
     [Fact]
-    public void Solution_WhenTheDeadlineIsZero_HasObjectiveValueZero()
+    public void Solution_GetsValueFromObjectives()
     {
         var modules = new Module[] { new("M1"), new("M2"), new("M3") };
         var customers = new Customer[] { new("C1", modules.Take(1)), new("C2", modules.Skip(1)) };
-        var objectives = new[] { new Objective(0) };
+        var objectives = new[] { new FixedValueDummyObjective(123), new FixedValueDummyObjective(456) };
         var instance = new Instance(modules, customers, objectives);
         var schedule = new ModuleSchedule(modules);
 
         var solution = new Solution(instance, schedule);
 
-        Assert.Equal(new ObjectiveValues(0), solution.Values);
-    }
-
-    [Fact]
-    public void Solution_WhenTheInstanceProvidesTwoObjectives_HasTwoObjectiveValues()
-    {
-        var instance = new Instance(Array.Empty<Module>(), Array.Empty<Customer>(), new Objective[] { new(0), new(0) });
-
-        var solution = new Solution(instance, new ModuleSchedule(Array.Empty<Module>()));
-
-        Assert.Equal(2, solution.Values.Values.Count);
-    }
-
-    [Fact]
-    public void Solution_WhenTheDeadlineIsThree_HasObjectiveValueTwo()
-    {
-        var modules = new Module[] { new("M1"), new("M2"), new("M3") };
-        var customers = new Customer[] { new("C1", modules.Take(1)), new("C2", modules.Skip(1)) };
-        var objectives = new[] { new Objective(3) };
-        var instance = new Instance(modules, customers, objectives);
-        var schedule = new ModuleSchedule(modules);
-
-        var solution = new Solution(instance, schedule);
-
-        Assert.Equal(new ObjectiveValues(2), solution.Values);
-    }
-
-    [Fact]
-    public void Solution_DoesntCountCustomerWithPartialModuleCoverage()
-    {
-        var modules = new Module[] { new("M1"), new("M2"), new("M3") };
-        var customers = new Customer[] { new("C1", modules.Take(1)), new("C2", modules.Skip(1)) };
-        var objectives = new[] { new Objective(2) };
-        var instance = new Instance(modules, customers, objectives);
-        var schedule = new ModuleSchedule(modules);
-
-        var solution = new Solution(instance, schedule);
-
-        Assert.Equal(new ObjectiveValues(1), solution.Values);
+        Assert.Equal(new ObjectiveValues(123, 456), solution.Values);
     }
 
     [Fact]
@@ -63,7 +30,7 @@ public class SolutionTests
     {
         var modules = new Module[] { new("M1"), new("M2"), new("M3") };
         var customers = new Customer[] { new("C1", modules.Skip(1).Take(1)), new("C2", modules.Take(2)) };
-        var objectives = new[] { new Objective(2) };
+        var objectives = new[] { new DeadlineObjective(2) };
         var instance = new Instance(modules, customers, objectives);
         var schedule = new ModuleSchedule(modules);
         var solution = new Solution(instance, schedule);
@@ -77,6 +44,4 @@ public class SolutionTests
         }.ToValueList());
         Assert.Equal(expectedReport, report);
     }
-
-
 }

@@ -4,33 +4,46 @@ using Scheduling;
 var instance = InstanceReader.FromFile("../../data/i1.txt");
 WriteLine($"Instance with {instance.Customers.Count()} customers / {instance.Modules.Count()} modules");
 
-var dummy = new Solution(instance, new (instance.Modules));
+var dummy = new Solution(instance, new(instance.Modules));
 var bestSolutionsForObjective = instance.Objectives.Select(_ => dummy).ToArray();
 
 var limit = 1000;
 var rand = new Random();
 for (int iteration = 0; iteration < limit; iteration++)
 {
-    var randomSol = new Solution(instance, new(instance.Modules.OrderBy(_ => rand.Next())));
-    WriteLine(randomSol.Values);
-    for (var i = 0; i < instance.Objectives.Count(); i++) {
+    var randomSol = SolveBasedOnCustomerOrder(instance, instance.Customers.OrderBy(c => c.Modules.Count * rand.NextDouble()));
+    // WriteLine(randomSol.Values);
+    for (var i = 0; i < instance.Objectives.Count(); i++)
+    {
         var currentValue = randomSol.Values.Values[i];
-        if (currentValue > bestSolutionsForObjective[i].Values.Values[i]) {
+        if (currentValue > bestSolutionsForObjective[i].Values.Values[i])
+        {
             bestSolutionsForObjective[i] = randomSol;
         }
     }
 }
 foreach (var solution in bestSolutionsForObjective)
 {
-    foreach (var entry in solution.GenerateReport().Entries) 
+    // PrintTimeTable(solution);
+}
+PrintObjectiveValues(instance, bestSolutionsForObjective);
+
+static void PrintObjectiveValues(Instance instance, Solution[] solutions)
+{
+    for (var i = 0; i < instance.Objectives.Count(); i++)
     {
-        PrintEntry(entry);
+        var objective = instance.Objectives.ElementAt(i);
+        var solution = solutions[i];
+        WriteLine($"{i}: {objective} {solution.Values.Values[i]} (all: {solution.Values})");
     }
-    WriteLine(solution.Values);
 }
 
-
-static void PrintEntry(TimeReportEntry entry) {
-    var customerString = string.Join(" ", entry.CoveredCustomers.Select(c => $"C{c.Name}"));
-    WriteLine($"T={entry.Time,3}  M{entry.Module.Name,3}  {customerString}");
+static Solution SolveBasedOnCustomerOrder(Instance instance, IEnumerable<Customer> customers)
+{
+    var modules = new List<Module>();
+    foreach (var customer in customers)
+    {
+        modules.AddRange(customer.Modules.Where(m => !modules.Contains(m)));
+    }
+    return new(instance, new(modules));
 }

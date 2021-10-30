@@ -25,12 +25,35 @@ public record Customer(string Name, ImmutableListWithValueSemantics<Module> Modu
 
 public record Module(string Name);
 
-public abstract record Objective() {
-    public abstract int CalculateValue(Instance instance, ModuleSchedule schedule);
+public abstract record Objective()
+{
+    public abstract int CalculateValue(IEnumerable<Customer> customers, ModuleSchedule schedule);
 };
-public record DeadlineObjective(int Deadline) : Objective {
-    public int CalculateValue(Instance instance, ModuleSchedule schedule) {
 
+public record DeadlineObjective(int Deadline) : Objective
+{
+    public override int CalculateValue(IEnumerable<Customer> customers, ModuleSchedule schedule)
+    {
+        var coveredModules = new HashSet<Module>(schedule.ScheduledModules.Take(Deadline));
+        return customers.Count(c => c.Modules.All(coveredModules.Contains));
     }
 }
-public record TimeValueObjective() : Objective;
+
+public record TimeValueObjective() : Objective
+{
+    public override int CalculateValue(IEnumerable<Customer> customers, ModuleSchedule schedule)
+    {
+        var remainingTime = schedule.ScheduledModules.Count();
+        var coveredModules = new HashSet<Module>();
+        var value = 0;
+        foreach (var module in schedule.ScheduledModules)
+        {
+            coveredModules.Add(module);
+            remainingTime -= 1;
+            var coveredCustomers = customers.Count(c => 
+                c.Modules.Contains(module) && c.Modules.All(coveredModules.Contains));
+            value += coveredCustomers * remainingTime;
+        }
+        return value;
+    }
+}
