@@ -44,4 +44,17 @@ public class TimeValueObjectiveTests
 
         Assert.Equal(12, val);
     }
+
+    [Fact]
+    public void WhenACustomerIsCovered3UnitsBeforeEndAndHasWeightSeven_ValueIsTwentyOne()
+    {
+        var modules = new Module[] { new("M1"), new("M2"), new("M3"), new("M4") };
+        var customers = new Customer[] { new("C1", modules.Take(1), 7) };
+        var schedule = new ModuleSchedule(modules);
+        var sut = new TimeValueObjective(customers, modules);
+
+        var val = sut.CalculateValue(customers, schedule);
+
+        Assert.Equal(21, val);
+    }
 }

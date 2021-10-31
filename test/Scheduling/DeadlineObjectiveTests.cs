@@ -33,6 +33,19 @@ public class DeadlineObjectiveTests
     }
 
     [Fact]
+    public void WhenCustomerHasWeight_HasMatchingObjectiveValue()
+    {
+        var modules = new Module[] { new("M1"), new("M2"), new("M3") };
+        var customers = new Customer[] { new("C1", modules.Take(1), 99) };
+        var schedule = new ModuleSchedule(modules);
+        var sut = new DeadlineObjective(3);
+
+        var val = sut.CalculateValue(customers, schedule);
+
+        Assert.Equal(99, val);
+    }
+
+    [Fact]
     public void DoesntCountCustomerWithPartialModuleCoverage()
     {
         var modules = new Module[] { new("M1"), new("M2"), new("M3") };

@@ -18,9 +18,9 @@ public class Instance
     }
 }
 
-public record Customer(string Name, ImmutableListWithValueSemantics<Module> Modules)
+public record Customer(string Name, ImmutableListWithValueSemantics<Module> Modules, int Weight = 1)
 {
-    public Customer(string name, IEnumerable<Module> modules) : this(name, modules.ToValueList()) { }
+    public Customer(string name, IEnumerable<Module> modules, int weight = 1) : this(name, modules.ToValueList(), weight) { }
 };
 
 public record Module(string Name, int Effort = 1);
@@ -45,7 +45,7 @@ public record DeadlineObjective(int Deadline) : Objective
             }
             coveredModules.Add(module);
         }
-        return customers.Count(c => c.Modules.All(coveredModules.Contains));
+        return customers.Where(c => c.Modules.All(coveredModules.Contains)).Sum(c => c.Weight);
     }
 }
 
@@ -80,7 +80,7 @@ public record TimeValueObjective : Objective
                 remainingModulesFor[customer] -= 1;
                 if (remainingModulesFor[customer] == 0)
                 {
-                    value += remainingTime;
+                    value += customer.Weight * remainingTime;
                 }
             }
         }
