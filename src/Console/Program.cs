@@ -1,13 +1,13 @@
 ﻿global using static System.Console;
 using Scheduling;
 
-var instance = InstanceReader.FromFile("../../data/i1.txt");
-WriteLine($"Instance with {instance.Customers.Count()} customers / {instance.Modules.Count()} modules");
+var instance = InstanceReader.FromFile("../../data/i3.txt");
+WriteLine($"Instance with {instance.Customers.Count()} customers / {instance.Modules.Count()} modules /  total effort: {instance.Modules.Sum(m => m.Effort)}");
 
 var dummy = new Solution(instance, new(instance.Modules));
 var bestSolutionsForObjective = instance.Objectives.Select(_ => dummy).ToArray();
 
-var limit = 1000;
+var limit = 100;
 var rand = new Random();
 for (int iteration = 0; iteration < limit; iteration++)
 {
@@ -22,10 +22,7 @@ for (int iteration = 0; iteration < limit; iteration++)
         }
     }
 }
-foreach (var solution in bestSolutionsForObjective)
-{
-    // PrintTimeTable(solution);
-}
+
 PrintObjectiveValues(instance, bestSolutionsForObjective);
 
 static void PrintObjectiveValues(Instance instance, Solution[] solutions)

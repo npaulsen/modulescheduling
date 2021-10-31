@@ -44,4 +44,17 @@ public class DeadlineObjectiveTests
 
         Assert.Equal(1, val);
     }
+
+    [Fact]
+    public void WhenDeadlineIsLowerThanSumOfModuleEfforts_ValueIsZero()
+    {
+        var modules = new Module[] { new("M1", 2), new("M2", 3), new("M3") };
+        var customers = new Customer[] { new("C1", modules.Take(2)) };
+        var schedule = new ModuleSchedule(modules);
+        var sut = new DeadlineObjective(4);
+
+        var val = sut.CalculateValue(customers, schedule);
+
+        Assert.Equal(0, val);
+    }
 }

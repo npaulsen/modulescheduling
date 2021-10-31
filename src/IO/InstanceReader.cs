@@ -7,39 +7,51 @@ public class InstanceReader
 
     public static Instance FromLines(string[] lines)
     {
-        var numObjectives = int.Parse(lines[0]);
-        var objectives = new List<Objective>();
-        foreach (var line in lines.Skip(1).Take(numObjectives))
+        var customerLookup = new Dictionary<string, List<string>>();
+        var moduleLookup = new Dictionary<string, Module>();
+        var objectiveLines = new List<string[]>();
+        foreach (var line in lines)
         {
             var parts = line.Split();
-            var type = parts[0];
-            Objective objective = type switch
+            switch (parts[0])
             {
-                "Deadline" => new DeadlineObjective(int.Parse(parts[1])),
-                "Timevalue" => new TimeValueObjective(),
-                _ => throw new Exception("Unrecognized objective type"),
-            };
-            objectives.Add(objective);
+                case "Objective":
+                    objectiveLines.Add(parts);
+                    break;
+                case "Module":
+                    moduleLookup.Add(parts[1], new(parts[1], int.Parse(parts[2])));
+                    break;
+                case "Customer":
+                    var customerId = parts[1];
+                    var moduleIds = parts.Skip(2);
+                    if (!customerLookup.ContainsKey(customerId))
+                    {
+                        customerLookup[customerId] = new();
+                    }
+                    customerLookup[customerId].AddRange(moduleIds);
+                    break;
+                default:
+                    throw new Exception($"Unable to parse isntance line:'{line}'");
+            }
         }
-
-        var customerLookup = new Dictionary<string, List<string>>();
-        foreach (var line in lines.Skip(1 + numObjectives))
+        // Add modules without explicit declaration.
+        foreach (var moduleId in customerLookup.Values.SelectMany(l => l).Distinct())
         {
-            var customerId = line.Split()[0];
-            var moduleId = line.Split()[1];
-            if (moduleId == string.Empty)
+            if (!moduleLookup.ContainsKey(moduleId))
             {
-                throw new Exception($"instance format mismatch in line:'{line}'");
+                moduleLookup[moduleId] = new(moduleId);
             }
-            if (!customerLookup.ContainsKey(customerId))
-            {
-                customerLookup[customerId] = new();
-            }
-            customerLookup[customerId].Add(moduleId);
         }
+        var modules = moduleLookup.Values;
         var customers = customerLookup
-            .Select(kvp => new Customer(kvp.Key, kvp.Value.Distinct().Select(moduleId => new Module(moduleId))));
-        var modules = customerLookup.Values.SelectMany(l => l).Distinct().Select(moduleId => new Module(moduleId));
+            .Select(kvp => new Customer(kvp.Key, kvp.Value.Distinct().Select(moduleId => moduleLookup[moduleId])));
+
+        var objectives = objectiveLines.Select<string[], Objective>(parts => parts[1] switch
+         {
+             "Deadline" => new DeadlineObjective(int.Parse(parts[2])),
+             "Timevalue" => new TimeValueObjective(customers, modules),
+             _ => throw new Exception("Unrecognized objective type"),
+         });
 
         return new Instance(modules, customers, objectives);
     }
