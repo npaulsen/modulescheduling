@@ -42,10 +42,9 @@ public class InstanceReader
                 moduleLookup[moduleId] = new(moduleId);
             }
         }
-        var modules = moduleLookup.Values;
         var customers = customerLookup
             .Select(kvp => new Customer(kvp.Key, kvp.Value.Distinct().Select(moduleId => moduleLookup[moduleId])));
-
+        var modules = customers.SelectMany(c => c.Modules).Distinct();
         var objectives = objectiveLines.Select<string[], Objective>(parts => parts[1] switch
          {
              "Deadline" => new DeadlineObjective(int.Parse(parts[2])),

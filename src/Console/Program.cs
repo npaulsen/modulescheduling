@@ -18,11 +18,11 @@ WriteLine($"# customers with identical modules: {instance.Customers.Count(c1 => 
 var dummy = new Solution(instance, new(instance.Modules));
 var bestSolutionsForObjective = instance.Objectives.Select(_ => dummy).ToArray();
 
-var limit = 100;
+var limit = 3;
 var rand = new Random();
 for (int iteration = 0; iteration < limit; iteration++)
 {
-    var randomSol = SolveBasedOnCustomerOrder(instance, instance.Customers.OrderBy(c => c.Modules.Count * rand.NextDouble()));
+    var randomSol = Solution.FromCustomerOrder(instance, instance.Customers.OrderBy(c => c.Modules.Count * rand.NextDouble()));
     // WriteLine(randomSol.Values);
     for (var i = 0; i < instance.Objectives.Count(); i++)
     {
@@ -33,8 +33,26 @@ for (int iteration = 0; iteration < limit; iteration++)
         }
     }
 }
+PrintTimetable(bestSolutionsForObjective[^1]);
 
 PrintObjectiveValues(instance, bestSolutionsForObjective);
+
+WriteLine("Attempting to improve timevalue..");
+var improved = Improver.OptimalSubsequencesSearch(bestSolutionsForObjective[^1]);
+System.Console.WriteLine(improved.Schedule.ScheduledModules.Count());
+System.Console.WriteLine(improved.Values);
+
+PrintTimetable(improved);
+
+
+static void PrintTimetable(Solution sol)
+{
+    foreach (var entry in sol.GenerateReport().Entries)
+    {
+        var customerString = string.Join(" ", entry.CoveredCustomers.Select(c => $"{c.Name}"));
+        WriteLine($"T={entry.Time,3}  {entry.Module.Name,4}  {customerString}");
+    }
+}
 
 static void PrintObjectiveValues(Instance instance, Solution[] solutions)
 {
@@ -45,17 +63,6 @@ static void PrintObjectiveValues(Instance instance, Solution[] solutions)
         WriteLine($"{i}: {objective} {solution.Values.Values[i]} (all: {solution.Values})");
     }
 }
-
-static Solution SolveBasedOnCustomerOrder(Instance instance, IEnumerable<Customer> customers)
-{
-    var modules = new List<Module>();
-    foreach (var customer in customers)
-    {
-        modules.AddRange(customer.Modules.Where(m => !modules.Contains(m)));
-    }
-    return new(instance, new(modules));
-}
-
 
 void PrintGraphviz(Instance instance)
 {

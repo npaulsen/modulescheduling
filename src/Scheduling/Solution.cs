@@ -34,14 +34,25 @@ public class Solution
     {
         var coveredModules = new HashSet<Module>();
         var reportEntries = new List<TimeReportEntry>();
-        foreach (var (module, timeIndex) in Schedule.ScheduledModules.Select((m, i) => (m, i)))
+        var time = 0;
+        foreach (var module in Schedule.ScheduledModules)
         {
-            var time = timeIndex + 1;
+            time += module.Effort;
             coveredModules.Add(module);
             var newlyCoveredCustomers = Instance.Customers.Where(c => c.Modules.Contains(module) && c.Modules.All(coveredModules.Contains));
             reportEntries.Add(new TimeReportEntry(time, module, newlyCoveredCustomers.ToValueList()));
         }
         return new Report(reportEntries.ToValueList());
+    }
+
+    public static Solution FromCustomerOrder(Instance instance, IEnumerable<Customer> customers)
+    {
+        var modules = new List<Module>();
+        foreach (var customer in customers)
+        {
+            modules.AddRange(customer.Modules.Where(m => !modules.Contains(m)));
+        }
+        return new(instance, new(modules));
     }
 }
 
