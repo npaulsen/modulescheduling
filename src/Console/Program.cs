@@ -5,7 +5,7 @@ var instance = InstanceReader.FromFile("../../data/i3.txt");
 WriteLine($"Instance with {instance.Customers.Count()} customers / {instance.Modules.Count()} modules /  total effort: {instance.Modules.Sum(m => m.Effort)}");
 
 WriteLine("Preprocessing.");
-instance = Preprocessor.Preprocess(instance);
+instance = instance.WithAggregatedCustomers().WithAggregatedModules();
 WriteLine($"Instance with {instance.Customers.Count()} customers / {instance.Modules.Count()} modules /  total effort: {instance.Modules.Sum(m => m.Effort)}");
 
 
