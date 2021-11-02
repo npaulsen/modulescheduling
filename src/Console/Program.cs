@@ -1,17 +1,17 @@
 ﻿global using static System.Console;
 using System.Diagnostics;
 using Scheduling;
-if (args.Length < 1)
+if (args.Length < 3)
 {
-    Error.WriteLine("specify instance file as argument!");
+    Error.WriteLine("USAGE: solver <INSTANCE PATH> <SUBSEQUENCE LENGTH> <MAX CUSTOMERS OPT>");
 }
-var instance = InstanceReader.FromFile(Path.Join(Environment.CurrentDirectory, args[0]));
+var instPath = Path.Join(Environment.CurrentDirectory, args[0]);
+var instance = InstanceReader.FromFile(instPath);
 WriteLine($"Instance {Path.GetFileName(args[0])} with {instance.Customers.Count()} customers / {instance.Modules.Count()} modules /  total effort: {instance.Modules.Sum(m => m.Effort)}");
 
 WriteLine("Preprocessing.");
 instance = instance.WithAggregatedCustomers().WithAggregatedModules();
 WriteLine($"Instance with {instance.Customers.Count()} customers / {instance.Modules.Count()} modules /  total effort: {instance.Modules.Sum(m => m.Effort)}");
-
 
 WriteLine($"# customers containing other customers: {instance.Customers.Count(c1 => instance.Customers.Any(c2 => c1 != c2 && !c1.Modules.Except(c2.Modules).Any()))}");
 WriteLine($"# customers containing other customers: {instance.Customers.Count(c1 => instance.Customers.Any(c2 => c1 != c2 && !c2.Modules.Except(c1.Modules).Any()))}");
@@ -19,7 +19,9 @@ WriteLine($"# customers with identical modules: {instance.Customers.Count(c1 => 
 
 // PrintGraphviz(instance);
 
-var dummy = Solution.FromCustomerOrder(instance, instance.Customers);
+var bestSolutionPath = Path.ChangeExtension(instPath, ".out");
+
+var dummy = LoadSolution(instance, bestSolutionPath);
 var bestSolutionsForObjective = instance.Objectives.Select(_ => dummy).ToArray();
 
 var limit = 0;
@@ -37,21 +39,25 @@ for (int iteration = 0; iteration < limit; iteration++)
         }
     }
 }
-PrintTimetable(bestSolutionsForObjective[^1]);
+// PrintTimetable(bestSolutionsForObjective[^1]);
 
 PrintObjectiveValues(instance, bestSolutionsForObjective);
 
 WriteLine("Attempting to improve timevalue..");
+var subseqLen = int.Parse(args[1]);
+var maxCustomersOpt = int.Parse(args[2]);
 var sw = new Stopwatch();
 sw.Start();
 var best = bestSolutionsForObjective[^1];
 while (true)
 {
-    var improved = Improver.OptimalSubsequencesSearch(best);
+    var improved = Improver.OptimalSubsequencesSearch(best, subseqLen, maxCustomersOpt);
     if (improved is not null)
     {
         best = improved;
         WriteLine($"{sw.ElapsedMilliseconds}ms\t${improved.Values.Values[^1]}");
+        WriteLine($"Serializing solution with value {best.Values.Values[^1]} to {bestSolutionPath}");
+        Scheduling.IO.SolutionSerializer.Serialize(best, bestSolutionPath);
     }
     else
     {
@@ -60,8 +66,21 @@ while (true)
     }
 }
 
-PrintTimetable(best);
+// PrintTimetable(best);
+WriteLine();
 
+
+// TODO warn in case restoring leads to less value?
+
+Solution LoadSolution(Instance instance, string searchPath)
+{
+    if (File.Exists(bestSolutionPath))
+    {
+        WriteLine($"Loading previous solution {bestSolutionPath}");
+        return Scheduling.IO.SolutionSerializer.Deserialize(instance, searchPath);
+    }
+    return Solution.FromCustomerOrder(instance, instance.Customers);
+}
 
 static void PrintTimetable(Solution sol)
 {
