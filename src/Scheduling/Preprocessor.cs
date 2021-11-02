@@ -20,7 +20,7 @@ public static class PreprocessingInstanceExtensions
 
         var newCustomers = identicalCustomers
             .Select(cluster => new Customer(
-                string.Join(", ", cluster.Select(c => c.Name)),
+                string.Join(",", cluster.Select(c => c.Name)),
                 cluster.First().Modules,
                 cluster.Sum(c => c.Weight)));
         var objectives = input.Objectives.Select(objective => objective switch

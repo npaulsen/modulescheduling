@@ -15,10 +15,10 @@ WriteLine($"# customers with identical modules: {instance.Customers.Count(c1 => 
 
 // PrintGraphviz(instance);
 
-var dummy = new Solution(instance, new(instance.Modules));
+var dummy = Solution.FromCustomerOrder(instance, instance.Customers);
 var bestSolutionsForObjective = instance.Objectives.Select(_ => dummy).ToArray();
 
-var limit = 3;
+var limit = 0;
 var rand = new Random();
 for (int iteration = 0; iteration < limit; iteration++)
 {
@@ -38,11 +38,23 @@ PrintTimetable(bestSolutionsForObjective[^1]);
 PrintObjectiveValues(instance, bestSolutionsForObjective);
 
 WriteLine("Attempting to improve timevalue..");
-var improved = Improver.OptimalSubsequencesSearch(bestSolutionsForObjective[^1]);
-System.Console.WriteLine(improved.Schedule.ScheduledModules.Count());
-System.Console.WriteLine(improved.Values);
+var best = bestSolutionsForObjective[^1];
+while (true)
+{
+    var improved = Improver.OptimalSubsequencesSearch(best);
+    if (improved is not null)
+    {
+        best = improved;
+        WriteLine(improved.Values);
+    }
+    else
+    {
+        WriteLine("No more improvement found.");
+        break;
+    }
+}
 
-PrintTimetable(improved);
+PrintTimetable(best);
 
 
 static void PrintTimetable(Solution sol)

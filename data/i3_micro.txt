@@ -1,0 +1,4 @@
+Objective Timevalue
+Customer C1 M1 M2 M3
+Customer C9 M9 M1 M4 M3
+Customer C10 M10 M4 M2 M3
