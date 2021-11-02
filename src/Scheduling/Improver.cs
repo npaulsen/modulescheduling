@@ -3,7 +3,7 @@ namespace Scheduling;
 
 public class Improver
 {
-    public static Solution? OptimalSubsequencesSearch(Solution input, int subSequenceLength = 2)
+    public static Solution? OptimalSubsequencesSearch(Solution input, int subSequenceLength = 2, int maxCustomersInSubsequence = 8)
     {
         var instance = input.Instance;
 
@@ -21,9 +21,9 @@ public class Improver
             // {
             //     Console.WriteLine($"Could reduce customers from {subSequenceInstance.Customers.Count()} to {reducedSubInstance.Customers.Count()} customers");
             // }
-            if (subSequenceInstance.Customers.Count() > 9)
+            if (subSequenceInstance.Customers.Count() > maxCustomersInSubsequence)
             {
-                Console.WriteLine($"Skipping sequence with {subSequenceInstance.Customers.Count()} customers");
+                Console.WriteLine($"Skipping sequence with {subSequenceInstance.Customers.Count()} customers (i={i})");
                 continue;
             }
             var originalValue = subSequenceInstance.Objectives.First().CalculateValue(subSequenceInstance.Customers, new(subSequenceInstance.Modules));
@@ -60,7 +60,7 @@ public class Improver
                     Console.WriteLine($"\tsolution-ð is only {solutionDelta}!");
                     if (solutionDelta <= 0)
                     {
-                        Console.WriteLine("ignoring result.");
+                        Console.WriteLine("\t-> ignoring result.");
                         continue;
                     }
 

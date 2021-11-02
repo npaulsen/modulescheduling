@@ -1,8 +1,12 @@
 ﻿global using static System.Console;
+using System.Diagnostics;
 using Scheduling;
-
-var instance = InstanceReader.FromFile("../../data/i3.txt");
-WriteLine($"Instance with {instance.Customers.Count()} customers / {instance.Modules.Count()} modules /  total effort: {instance.Modules.Sum(m => m.Effort)}");
+if (args.Length < 1)
+{
+    Error.WriteLine("specify instance file as argument!");
+}
+var instance = InstanceReader.FromFile(Path.Join(Environment.CurrentDirectory, args[0]));
+WriteLine($"Instance {Path.GetFileName(args[0])} with {instance.Customers.Count()} customers / {instance.Modules.Count()} modules /  total effort: {instance.Modules.Sum(m => m.Effort)}");
 
 WriteLine("Preprocessing.");
 instance = instance.WithAggregatedCustomers().WithAggregatedModules();
@@ -38,6 +42,8 @@ PrintTimetable(bestSolutionsForObjective[^1]);
 PrintObjectiveValues(instance, bestSolutionsForObjective);
 
 WriteLine("Attempting to improve timevalue..");
+var sw = new Stopwatch();
+sw.Start();
 var best = bestSolutionsForObjective[^1];
 while (true)
 {
@@ -45,7 +51,7 @@ while (true)
     if (improved is not null)
     {
         best = improved;
-        WriteLine(improved.Values);
+        WriteLine($"{sw.ElapsedMilliseconds}ms\t${improved.Values.Values[^1]}");
     }
     else
     {

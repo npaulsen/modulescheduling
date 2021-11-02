@@ -341,3 +341,6 @@ healthchecksdb
 
 # env variables for docker-compose, might contain secrets
 .env
+
+# any real data
+data/*real*
