@@ -3,15 +3,17 @@ namespace Scheduling;
 
 public class Improver
 {
-    public static Solution? OptimalSubsequencesSearch(Solution input, int subSequenceLength = 2, int maxCustomersInSubsequence = 8)
+    public static (Solution?, int) OptimalSubsequencesSearch(Solution input, int subSequenceLength = 2, int maxCustomersInSubsequence = 8, int startSearch = 0)
     {
         var instance = input.Instance;
 
-        var coveredModules = new HashSet<Module>();
-
         var entriesWithFinishingCustomers = input.GenerateReport().Entries.Where(e => e.CoveredCustomers.Any()).ToList();
+        var coveredModules = new HashSet<Module>(
+            entriesWithFinishingCustomers.Take(startSearch)
+                .SelectMany(e => e.CoveredCustomers
+                .SelectMany(c => c.Modules)));
 
-        for (int i = 0; i < entriesWithFinishingCustomers.Count; i++)
+        for (int i = startSearch; i < entriesWithFinishingCustomers.Count; i++)
         {
             var subSequence = entriesWithFinishingCustomers.Skip(i).Take(subSequenceLength).SelectMany(e => e.CoveredCustomers);
             var subSequenceInstance = GetSubInstance(subSequence, coveredModules);
@@ -71,7 +73,7 @@ public class Improver
                     // Console.WriteLine($"{newSolution.Values} [{solutionDelta}] i={i}");
                     // return newSolution;
                 }
-                return newSolution;
+                return (newSolution,i);
             }
 
             foreach (var module in entriesWithFinishingCustomers[i].CoveredCustomers.SelectMany(c => c.Modules))
@@ -79,7 +81,7 @@ public class Improver
                 coveredModules.Add(module);
             }
         }
-        return null;
+        return (null,0);
     }
 
     private static Instance GetSubInstance(IEnumerable<Customer> customers, HashSet<Module> alreadyCoveredModules)

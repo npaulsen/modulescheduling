@@ -54,9 +54,11 @@ var maxCustomersOpt = int.Parse(args[2]);
 var sw = new Stopwatch();
 sw.Start();
 var best = bestSolutionsForObjective[^1];
+var lastFoundIndex = 0;
 while (true)
 {
-    var improved = Improver.OptimalSubsequencesSearch(best, subseqLen, maxCustomersOpt);
+    var startIndex = Math.Max(0, lastFoundIndex - subseqLen);
+    (var improved, lastFoundIndex) = Improver.OptimalSubsequencesSearch(best, subseqLen, maxCustomersOpt, startIndex);
     if (improved is not null)
     {
         best = improved;
@@ -85,7 +87,7 @@ Solution LoadSolution(Instance instance, string searchPath)
         var solution =  Scheduling.IO.SolutionSerializer.Deserialize(instance, searchPath);
         return solution;
     }
-    return Solution.FromCustomerOrder(instance, instance.Customers);
+    return Solution.FromCustomerOrder(instance, instance.Customers.OrderBy(c => c.Modules.Count()));
 }
 
 static void PrintTimetable(Solution sol)
