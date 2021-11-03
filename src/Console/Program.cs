@@ -1,6 +1,8 @@
 ﻿global using static System.Console;
 using System.Diagnostics;
 using Scheduling;
+using Scheduling.IO;
+
 if (args.Length < 3)
 {
     Error.WriteLine("USAGE: solver <INSTANCE PATH> <SUBSEQUENCE LENGTH> <MAX CUSTOMERS OPT>");
@@ -40,8 +42,11 @@ for (int iteration = 0; iteration < limit; iteration++)
     }
 }
 // PrintTimetable(bestSolutionsForObjective[^1]);
-
+var csvReport = Scheduling.IO.SolutionReportExporter.BuildCsvReport(bestSolutionsForObjective[^1]);
+// System.Console.WriteLine(csvReport);
+File.WriteAllText(Path.ChangeExtension(instPath, ".csv"), csvReport);
 PrintObjectiveValues(instance, bestSolutionsForObjective);
+// throw new Exception("abort");
 
 WriteLine("Attempting to improve timevalue..");
 var subseqLen = int.Parse(args[1]);
@@ -77,7 +82,8 @@ Solution LoadSolution(Instance instance, string searchPath)
     if (File.Exists(bestSolutionPath))
     {
         WriteLine($"Loading previous solution {bestSolutionPath}");
-        return Scheduling.IO.SolutionSerializer.Deserialize(instance, searchPath);
+        var solution =  Scheduling.IO.SolutionSerializer.Deserialize(instance, searchPath);
+        return solution;
     }
     return Solution.FromCustomerOrder(instance, instance.Customers);
 }

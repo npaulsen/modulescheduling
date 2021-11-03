@@ -4,13 +4,19 @@ public class SolutionSerializer
 {
     public static void Serialize(Solution s, string path)
     {
-        var customerOrder = s.GenerateReport().Entries.SelectMany(e => e.CoveredCustomers);
-        File.WriteAllLines(path, customerOrder.Select(c => c.Name));
+        var moduleOrder = s.GenerateReport().Entries.SelectMany(e => e.CoveredCustomers).SelectMany(c => c.Modules).Distinct();
+        File.WriteAllLines(path, moduleOrder.Select(m => m.Name));
     }
 
     public static Solution Deserialize(Instance instance, string path)
     {
-        var customerOrder = File.ReadAllLines(path).Select(line => instance.Customers.First(c => c.Name == line));
-        return Solution.FromCustomerOrder(instance, customerOrder);
+        var moduleOrder = File.ReadAllLines(path).Select(line => {
+            var m = instance.Modules.FirstOrDefault(m => string.Equals(m.Name,line,StringComparison.InvariantCultureIgnoreCase));
+            if (m is null) {
+                throw new Exception(line);
+            }
+            return m;
+        });
+        return new Solution(instance,new(moduleOrder));
     }
 }

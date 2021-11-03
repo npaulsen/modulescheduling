@@ -14,29 +14,26 @@ public class Improver
         for (int i = 0; i < entriesWithFinishingCustomers.Count; i++)
         {
             var subSequence = entriesWithFinishingCustomers.Skip(i).Take(subSequenceLength).SelectMany(e => e.CoveredCustomers);
-            // TODO: Extend instance if preprocessable for customers
             var subSequenceInstance = GetSubInstance(subSequence, coveredModules);
-            // var reducedSubInstance = subSequenceInstance.WithAggregatedCustomers();
-            // if (reducedSubInstance.Customers.Count() < subSequenceInstance.Customers.Count())
-            // {
-            //     Console.WriteLine($"Could reduce customers from {subSequenceInstance.Customers.Count()} to {reducedSubInstance.Customers.Count()} customers");
-            // }
-            if (subSequenceInstance.Customers.Count() > maxCustomersInSubsequence)
+            var preprocessor = new ReversablePreprocessor(subSequenceInstance);
+            var reducedSubInstance = preprocessor.PreprocessedInstance;
+            if (reducedSubInstance.Customers.Count() > maxCustomersInSubsequence)
             {
-                Console.WriteLine($"Skipping sequence with {subSequenceInstance.Customers.Count()} customers (i={i})");
+                Console.WriteLine($"Skipping sequence with {reducedSubInstance.Customers.Count()} customers (i={i})");
                 continue;
             }
-            var originalValue = subSequenceInstance.Objectives.First().CalculateValue(subSequenceInstance.Customers, new(subSequenceInstance.Modules));
+            var originalValue = reducedSubInstance.Objectives.First().CalculateValue(reducedSubInstance.Customers, new(reducedSubInstance.Modules));
 
-            var subSequenceSolution = OptimalSolver.ExhaustiveSearch(subSequenceInstance);
+            var subSequenceSolution = OptimalSolver.ExhaustiveSearch(reducedSubInstance);
             var delta = subSequenceSolution.Values.Values[0] - originalValue;
             if (delta > 0)
             {
-                Console.WriteLine($"\t{nameof(OptimalSubsequencesSearch)} improved on subsequence with {subSequence.Count()} customers, i={i}, ð={delta}");
+                var preproInfo = reducedSubInstance.Customers.Count() < subSequence.Count() ? $" (reduced from {subSequence.Count()})" : "";
+                Console.WriteLine($"\t{nameof(OptimalSubsequencesSearch)} improved on subsequence with {reducedSubInstance.Customers.Count()}{preproInfo} customers, i={i}, ð={delta}");
                 var newSubSequence = subSequenceSolution
                     .GenerateReport()
                     .Entries
-                    .SelectMany(e => e.CoveredCustomers)
+                    .SelectMany(e => preprocessor.GetOriginalCustomers(e.CoveredCustomers))
                     .ToList();
                 var customerSequence = entriesWithFinishingCustomers.SelectMany(e => e.CoveredCustomers.ToList()).ToList();
 

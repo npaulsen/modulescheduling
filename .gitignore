@@ -344,3 +344,4 @@ healthchecksdb
 
 # any real data
 data/*real*
+data/*original*
